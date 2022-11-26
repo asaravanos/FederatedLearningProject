@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 from options import args_parser
 from update import LocalUpdate, test_inference
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
-from utils import get_dataset, average_weights, exp_details
+from utils import get_dataset, average_weights, exp_details, global_adagrad
 
 
 if __name__ == '__main__':
@@ -65,6 +65,13 @@ if __name__ == '__main__':
 
     # copy weights
     global_weights = global_model.state_dict()
+    global_weights_prev = global_weights
+    mu_t_prev = None
+    v_t_prev = None
+    
+    # global optimizer parameters
+    # if args.global_opt == 'adagrad':
+    #     beta1 = args.global_opt_beta1
 
     # Training
     train_loss, train_accuracy = [], []
@@ -73,7 +80,7 @@ if __name__ == '__main__':
     print_every = 2
     val_loss_pre, counter = 0, 0
 
-    for epoch in tqdm(range(args.epochs)):
+    for epoch in tqdm(range(args.epochs)):              # Global training rounds
         local_weights, local_losses = [], []
         print(f'\n | Global Training Round : {epoch+1} |\n')
 
@@ -90,7 +97,14 @@ if __name__ == '__main__':
             local_losses.append(copy.deepcopy(loss))
 
         # update global weights
-        global_weights = average_weights(local_weights)
+        if args.global_opt == 'avg':
+            global_weights = average_weights(local_weights)
+        elif args.global_opt == 'adagrad':
+            global_weights, m_t, v_t = global_adagrad(args, epoch, local_weights, global_weights_prev, mu_t_prev, v_t_prev)
+            mu_t_prev = m_t
+            v_t_prev = v_t
+        else:
+            exit('Error: unrecognized global optimizer')
 
         # update global weights
         global_model.load_state_dict(global_weights)
