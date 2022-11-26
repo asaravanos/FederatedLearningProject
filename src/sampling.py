@@ -170,7 +170,8 @@ def cifar_noniid(dataset, num_users):
     dict_users = {i: np.array([]) for i in range(num_users)}
     idxs = np.arange(num_shards*num_imgs)
     # labels = dataset.train_labels.numpy()
-    labels = np.array(dataset.train_labels)
+    # labels = np.array(dataset.train_labels)                    # replaced with the following line
+    labels = np.array(dataset.targets)                           # for more info see https://github.com/EricArazo/PseudoLabeling/issues/3
 
     # sort labels
     idxs_labels = np.vstack((idxs, labels))
