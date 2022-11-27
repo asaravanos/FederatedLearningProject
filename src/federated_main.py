@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 from options import args_parser
 from update import LocalUpdate, test_inference
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
-from utils import get_dataset, average_weights, exp_details, global_adagrad
+from utils import get_dataset, average_weights, exp_details, global_adagrad, global_adam
 
 
 if __name__ == '__main__':
@@ -101,6 +101,10 @@ if __name__ == '__main__':
             global_weights = average_weights(local_weights)
         elif args.global_opt == 'adagrad':
             global_weights, m_t, v_t = global_adagrad(args, epoch, local_weights, global_weights_prev, mu_t_prev, v_t_prev)
+            mu_t_prev = m_t
+            v_t_prev = v_t
+        elif args.global_opt == 'adam':
+            global_weights, m_t, v_t = global_adam(args, epoch, local_weights, global_weights_prev, mu_t_prev, v_t_prev)
             mu_t_prev = m_t
             v_t_prev = v_t
         else:

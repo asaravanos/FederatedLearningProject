@@ -27,10 +27,10 @@ def args_parser():
     # global optimizer
     parser.add_argument('--global_opt', type=str, default='adagrad',
                         help="which is the global optimizer")
-    parser.add_argument('--global_opt_beta1', type=float, default=0.5,
+    parser.add_argument('--global_opt_beta1', type=float, default=0.9,
                         help="parameter beta1 for adaptive optimizers")
-    # parser.add_argument('--global_opt_beta2', type=float, default=0.5,
-    #                     help="parameter beta2 for adaptive optimizers")
+    parser.add_argument('--global_opt_beta2', type=float, default=0.99,
+                        help="parameter beta2 for adaptive optimizers")
     parser.add_argument('--tau', type=float, default=1e-7,
                         help="tau for AdaGrad")
 
