@@ -87,8 +87,8 @@ def global_adagrad(args, epoch, w, w_global_prev, m_prev, v_prev):
     """
     FedAdaGrad: Global optimizer = AdaGrad
     """
-    if args.global_opt == 'adagrad':
-        beta1 = args.global_opt_beta1
+    beta1 = args.global_opt_beta1
+    tau = args.global_opt_tau
         
     if epoch == 0:
         w_global = average_weights(w)
@@ -128,7 +128,7 @@ def global_adagrad(args, epoch, w, w_global_prev, m_prev, v_prev):
         # w_global = w_global_prev + lr * (m/tau + sqrt(v))
         w_global = copy.deepcopy(w_global_prev)
         for key in w_global.keys():
-            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], args.tau + torch.sqrt(v[key]))
+            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], tau + torch.sqrt(v[key]))
             
     return w_global, m, v
 
@@ -136,9 +136,9 @@ def global_adam(args, epoch, w, w_global_prev, m_prev, v_prev):
     """
     FedAdam: Global optimizer = Adam
     """
-    if args.global_opt == 'adam':
-        beta1 = args.global_opt_beta1
-        beta2 = args.global_opt_beta2
+    beta1 = args.global_opt_beta1
+    beta2 = args.global_opt_beta2
+    tau = args.global_opt_tau
         
     if epoch == 0:
         w_global = average_weights(w)
@@ -178,7 +178,7 @@ def global_adam(args, epoch, w, w_global_prev, m_prev, v_prev):
         # w_global = w_global_prev + lr * (m/tau + sqrt(v))
         w_global = copy.deepcopy(w_global_prev)
         for key in w_global.keys():
-            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], args.tau + torch.sqrt(v[key]))
+            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key],  tau + torch.sqrt(v[key]))
             
     return w_global, m, v
 
@@ -186,9 +186,10 @@ def global_yogi(args, epoch, w, w_global_prev, m_prev, v_prev):
     """
     FedYogi: Global optimizer = Yogi
     """
-    if args.global_opt == 'yogi':
-        beta1 = args.global_opt_beta1
-        beta2 = args.global_opt_beta2
+
+    beta1 = args.global_opt_beta1
+    beta2 = args.global_opt_beta2
+    tau = args.global_opt_tau
         
     if epoch == 0:
         w_global = average_weights(w)
@@ -228,7 +229,7 @@ def global_yogi(args, epoch, w, w_global_prev, m_prev, v_prev):
         # w_global = w_global_prev + lr * (m/tau + sqrt(v))
         w_global = copy.deepcopy(w_global_prev)
         for key in w_global.keys():
-            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], args.tau + torch.sqrt(v[key]))
+            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], tau + torch.sqrt(v[key]))
             
     return w_global, m, v
 
@@ -236,7 +237,7 @@ def global_yogi(args, epoch, w, w_global_prev, m_prev, v_prev):
 def exp_details(args):
     print('\nExperimental details:')
     print(f'    Model     : {args.model}')
-    print(f'    Optimizer : {args.optimizer}')
+    print(f'    Local Optimizer : {args.local_optimizer}')
     print(f'    Learning  : {args.lr}')
     print(f'    Global Rounds   : {args.epochs}\n')
 

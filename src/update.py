@@ -57,10 +57,10 @@ class LocalUpdate(object):
         epoch_loss = []
 
         # Set optimizer for the local updates
-        if self.args.optimizer == 'sgd':
+        if self.args.local_optimizer == 'sgd':
             optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr,
                                         momentum=0.0)
-        elif self.args.optimizer == 'adam':
+        elif self.args.local_optimizer == 'adam':
             optimizer = torch.optim.Adam(model.parameters(), lr=self.args.lr,
                                          weight_decay=1e-4)
 

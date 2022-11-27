@@ -6,6 +6,7 @@
 import os
 import copy
 import time
+import datetime
 import pickle
 import numpy as np
 from tqdm import tqdm
@@ -22,19 +23,29 @@ from utils import get_dataset, average_weights, exp_details, global_adagrad, glo
 if __name__ == '__main__':
     start_time = time.time()
 
-    # define paths
+    # Define paths
     path_project = os.path.abspath('..')
     logger = SummaryWriter('../logs')
 
+    # Create new date-time directory 
+    path_project = path_project.replace("\\", "/")
+    ct = datetime.datetime.now()
+    date_time = ct.strftime("%Y-%m-%d-%H-%M-%S")
+    path = path_project + '/FederatingLearningProject/save/' + date_time                    # When run through CMD
+    # path = path_project + '/save/' + date_time                                            # When run through SPYDER
+    os.mkdir(path)
+    
+    # Get arguments
     args = args_parser()
     exp_details(args)
 
+    # Set device
     # if args.gpu_id:
     #     torch.cuda.set_device(args.gpu_id)
     # device = 'cuda' if args.gpu else 'cpu'
     device = 'cpu'
 
-    # load dataset and user groups
+    # Load dataset and user groups
     train_dataset, test_dataset, user_groups = get_dataset(args)
 
     # BUILD MODEL
@@ -63,16 +74,12 @@ if __name__ == '__main__':
     global_model.train()
     print(global_model)
 
-    # copy weights
+    # Copy weights
     global_weights = global_model.state_dict()
     global_weights_prev = global_weights
     global_m_prev = None
     global_v_prev = None
     
-    # global optimizer parameters
-    # if args.global_opt == 'adagrad':
-    #     beta1 = args.global_opt_beta1
-
     # Training
     train_loss, train_accuracy = [], []
     val_acc_list, net_list = [], []
@@ -88,6 +95,7 @@ if __name__ == '__main__':
         m = max(int(args.frac * args.num_users), 1)
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
 
+        # Update local weights
         for idx in idxs_users:
             local_model = LocalUpdate(args=args, dataset=train_dataset,
                                       idxs=user_groups[idx], logger=logger)
@@ -96,7 +104,7 @@ if __name__ == '__main__':
             local_weights.append(copy.deepcopy(w))
             local_losses.append(copy.deepcopy(loss))
 
-        # update global weights
+        # Update global weights
         if args.global_opt == 'avg':
             global_weights = average_weights(local_weights)
         elif args.global_opt == 'adagrad':
@@ -114,9 +122,9 @@ if __name__ == '__main__':
         else:
             exit('Error: unrecognized global optimizer')
 
-        # update global weights
         global_model.load_state_dict(global_weights)
-
+        
+        # Compute training loss
         loss_avg = sum(local_losses) / len(local_losses)
         train_loss.append(loss_avg)
 
@@ -131,7 +139,7 @@ if __name__ == '__main__':
             list_loss.append(loss)
         train_accuracy.append(sum(list_acc)/len(list_acc))
 
-        # print global training loss after every 'i' rounds
+        # Print global training loss after every 'i' rounds
         if (epoch+1) % print_every == 0:
             print(f' \nAvg Training Stats after {epoch+1} global rounds:')
             print(f'Training Loss : {np.mean(np.array(train_loss))}')
@@ -154,27 +162,26 @@ if __name__ == '__main__':
 
     print('\n Total Run Time: {0:0.4f}'.format(time.time()-start_time))
 
-    # PLOTTING (optional)
-    # import matplotlib
-    # import matplotlib.pyplot as plt
-    # matplotlib.use('Agg')
+    # PLOTTING
+    import matplotlib
+    import matplotlib.pyplot as plt
+    matplotlib.use('Agg')
 
-    # Plot Loss curve
-    # plt.figure()
-    # plt.title('Training Loss vs Communication rounds')
-    # plt.plot(range(len(train_loss)), train_loss, color='r')
-    # plt.ylabel('Training loss')
-    # plt.xlabel('Communication Rounds')
-    # plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_loss.png'.
-    #             format(args.dataset, args.model, args.epochs, args.frac,
-    #                    args.iid, args.local_ep, args.local_bs))
+    # Plot Training Loss curve
+    plt.figure()
+    plt.title('Training Loss vs Communication rounds')
+    plt.plot(range(len(train_loss)), train_loss, color='r')
+    plt.ylabel('Training loss')
+    plt.xlabel('Communication Rounds')
+    plt.savefig(path + '/fed_{}_{}_iid{}_Global_{}_Local_{}_loss.png'.
+                format(args.dataset, args.model, args.iid, args.global_opt, args.local_optimizer))
+    # plt.savefig('save/my_fig.png')
     #
     # # Plot Average Accuracy vs Communication rounds
-    # plt.figure()
-    # plt.title('Average Accuracy vs Communication rounds')
-    # plt.plot(range(len(train_accuracy)), train_accuracy, color='k')
-    # plt.ylabel('Average Accuracy')
-    # plt.xlabel('Communication Rounds')
-    # plt.savefig('../save/fed_{}_{}_{}_C[{}]_iid[{}]_E[{}]_B[{}]_acc.png'.
-    #             format(args.dataset, args.model, args.epochs, args.frac,
-    #                    args.iid, args.local_ep, args.local_bs))
+    plt.figure()
+    plt.title('Average Accuracy vs Communication rounds')
+    plt.plot(range(len(train_accuracy)), train_accuracy, color='k')
+    plt.ylabel('Average Accuracy')
+    plt.xlabel('Communication Rounds')
+    plt.savefig(path + '/fed_{}_{}_iid{}_Global_{}_Local_{}_acc.png'.
+                format(args.dataset, args.model, args.iid, args.global_opt, args.local_optimizer))
