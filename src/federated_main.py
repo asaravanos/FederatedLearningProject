@@ -16,7 +16,7 @@ from tensorboardX import SummaryWriter
 from options import args_parser
 from update import LocalUpdate, test_inference
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
-from utils import get_dataset, average_weights, exp_details, global_adagrad, global_adam
+from utils import get_dataset, average_weights, exp_details, global_adagrad, global_adam, global_yogi
 
 
 if __name__ == '__main__':
@@ -66,8 +66,8 @@ if __name__ == '__main__':
     # copy weights
     global_weights = global_model.state_dict()
     global_weights_prev = global_weights
-    mu_t_prev = None
-    v_t_prev = None
+    global_m_prev = None
+    global_v_prev = None
     
     # global optimizer parameters
     # if args.global_opt == 'adagrad':
@@ -100,13 +100,17 @@ if __name__ == '__main__':
         if args.global_opt == 'avg':
             global_weights = average_weights(local_weights)
         elif args.global_opt == 'adagrad':
-            global_weights, m_t, v_t = global_adagrad(args, epoch, local_weights, global_weights_prev, mu_t_prev, v_t_prev)
-            mu_t_prev = m_t
-            v_t_prev = v_t
+            global_weights, global_m, global_v = global_adagrad(args, epoch, local_weights, global_weights_prev, global_m_prev, global_v_prev)
+            global_m_prev = global_m
+            global_v_prev = global_v
         elif args.global_opt == 'adam':
-            global_weights, m_t, v_t = global_adam(args, epoch, local_weights, global_weights_prev, mu_t_prev, v_t_prev)
-            mu_t_prev = m_t
-            v_t_prev = v_t
+            global_weights, global_m, global_v = global_adam(args, epoch, local_weights, global_weights_prev, global_m_prev, global_v_prev)
+            global_m_prev = global_m
+            global_v_prev = global_v
+        elif args.global_opt == 'yogi':
+            global_weights, global_m, global_v = global_yogi(args, epoch, local_weights, global_weights_prev, global_m_prev, global_v_prev)
+            global_m_prev = global_m
+            global_v_prev = global_v
         else:
             exit('Error: unrecognized global optimizer')
 

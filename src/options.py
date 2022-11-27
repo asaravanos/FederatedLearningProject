@@ -26,7 +26,7 @@ def args_parser():
     
     # global optimizer
     parser.add_argument('--global_opt', type=str, default='adagrad',
-                        help="which is the global optimizer")
+                        help="which is the global optimizer (adagrad, adam, yogi)")
     parser.add_argument('--global_opt_beta1', type=float, default=0.9,
                         help="parameter beta1 for adaptive optimizers")
     parser.add_argument('--global_opt_beta2', type=float, default=0.99,
