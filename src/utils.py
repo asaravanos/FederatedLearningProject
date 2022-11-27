@@ -83,7 +83,7 @@ def average_weights(w):
         w_avg[key] = torch.div(w_avg[key], len(w))
     return w_avg
 
-def global_adagrad(args, epoch, w, w_global_prev, m_t_prev, v_t_prev):
+def global_adagrad(args, epoch, w, w_global_prev, m_prev, v_prev):
     """
     FedAdaGrad: Global optimizer = AdaGrad
     """
@@ -92,47 +92,47 @@ def global_adagrad(args, epoch, w, w_global_prev, m_t_prev, v_t_prev):
         
     if epoch == 0:
         w_global = average_weights(w)
-        m_t = None
-        v_t = None
+        m = None
+        v = None
     elif epoch == 1:
         w_avg = average_weights(w)
         w_global = copy.deepcopy(w_avg)
         
-        # Delta_t = w_avg - w_global_prev
-        Delta_t = copy.deepcopy(w_avg)
-        for key in Delta_t.keys():
-            Delta_t[key] = Delta_t[key] - w_global_prev[key]
+        # Delta = w_avg - w_global_prev
+        Delta = copy.deepcopy(w_avg)
+        for key in Delta.keys():
+            Delta[key] = Delta[key] - w_global_prev[key]
             
-        m_t = Delta_t
+        m = Delta
         
-        # v_t = Delta_t^2
-        v_t = copy.deepcopy(Delta_t)
-        for key in Delta_t.keys():
-            v_t[key] = torch.square(Delta_t[key])
+        # v = Delta^2
+        v = copy.deepcopy(Delta)
+        for key in Delta.keys():
+            v[key] = torch.square(Delta[key])
     else:
         w_avg = average_weights(w)
         
-        # Delta_t = w_avg - w_global_prev
-        Delta_t = copy.deepcopy(w_avg)
-        for key in Delta_t.keys():
-            Delta_t[key] = Delta_t[key] - w_global_prev[key]
+        # Delta = w_avg - w_global_prev
+        Delta = copy.deepcopy(w_avg)
+        for key in Delta.keys():
+            Delta[key] = Delta[key] - w_global_prev[key]
             
-        # m_t = beta1 * m_t_prev + (1-beta1) * Delta_t
-        m_t = copy.deepcopy(Delta_t)                       # simplified case with beta1 = 0.0
+        # m = beta1 * m_prev + (1-beta1) * Delta
+        m = copy.deepcopy(Delta)                       # simplified case with beta1 = 0.0
             
-        # v_t = v_t_prev + Delta_t**2
-        v_t = copy.deepcopy(Delta_t)
-        for key in Delta_t.keys():
-            v_t[key] = v_t_prev[key] + torch.square(Delta_t[key])
+        # v = v_prev + Delta**2
+        v = copy.deepcopy(Delta)
+        for key in Delta.keys():
+            v[key] = v_prev[key] + torch.square(Delta[key])
         
-        # w_global = w_global_prev + lr * (m_t/tau + sqrt(v_t))
+        # w_global = w_global_prev + lr * (m/tau + sqrt(v))
         w_global = copy.deepcopy(w_global_prev)
         for key in w_global.keys():
-            w_global[key] = w_global_prev[key] + args.lr * torch.div(m_t[key], args.tau + torch.sqrt(v_t[key]))
+            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], args.tau + torch.sqrt(v[key]))
             
-    return w_global, m_t, v_t
+    return w_global, m, v
 
-def global_adam(args, epoch, w, w_global_prev, m_t_prev, v_t_prev):
+def global_adam(args, epoch, w, w_global_prev, m_prev, v_prev):
     """
     FedAdam: Global optimizer = Adam
     """
@@ -142,47 +142,47 @@ def global_adam(args, epoch, w, w_global_prev, m_t_prev, v_t_prev):
         
     if epoch == 0:
         w_global = average_weights(w)
-        m_t = None
-        v_t = None
+        m = None
+        v = None
     elif epoch == 1:
         w_avg = average_weights(w)
         w_global = copy.deepcopy(w_avg)
         
-        # Delta_t = w_avg - w_global_prev
-        Delta_t = copy.deepcopy(w_avg)
-        for key in Delta_t.keys():
-            Delta_t[key] = Delta_t[key] - w_global_prev[key]
+        # Delta = w_avg - w_global_prev
+        Delta = copy.deepcopy(w_avg)
+        for key in Delta.keys():
+            Delta[key] = Delta[key] - w_global_prev[key]
             
-        m_t = Delta_t
+        m = Delta
         
-        # v_t = Delta_t^2
-        v_t = copy.deepcopy(Delta_t)
-        for key in Delta_t.keys():
-            v_t[key] = torch.square(Delta_t[key])
+        # v = Delta^2
+        v = copy.deepcopy(Delta)
+        for key in Delta.keys():
+            v[key] = torch.square(Delta[key])
     else:
         w_avg = average_weights(w)
         
-        # Delta_t = w_avg - w_global_prev
-        Delta_t = copy.deepcopy(w_avg)
-        for key in Delta_t.keys():
-            Delta_t[key] = Delta_t[key] - w_global_prev[key]
+        # Delta = w_avg - w_global_prev
+        Delta = copy.deepcopy(w_avg)
+        for key in Delta.keys():
+            Delta[key] = Delta[key] - w_global_prev[key]
             
-        # m_t = beta1 * m_t_prev + (1-beta1) * Delta_t
-        m_t = copy.deepcopy(Delta_t)                       # simplified case with beta1 = 0.0
+        # m = beta1 * m_prev + (1-beta1) * Delta
+        m = copy.deepcopy(Delta)                       # simplified case with beta1 = 0.0
             
-        # v_t = v_t_prev + Delta_t**2
-        v_t = copy.deepcopy(Delta_t)
-        for key in Delta_t.keys():
-            v_t[key] =  beta2 * v_t_prev[key] + (1.0-beta2) * torch.square(Delta_t[key])
+        # v = v_prev + Delta**2
+        v = copy.deepcopy(Delta)
+        for key in Delta.keys():
+            v[key] =  beta2 * v_prev[key] + (1.0-beta2) * torch.square(Delta[key])
         
-        # w_global = w_global_prev + lr * (m_t/tau + sqrt(v_t))
+        # w_global = w_global_prev + lr * (m/tau + sqrt(v))
         w_global = copy.deepcopy(w_global_prev)
         for key in w_global.keys():
-            w_global[key] = w_global_prev[key] + args.lr * torch.div(m_t[key], args.tau + torch.sqrt(v_t[key]))
+            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], args.tau + torch.sqrt(v[key]))
             
-    return w_global, m_t, v_t
+    return w_global, m, v
 
-def global_yogi(args, epoch, w, w_global_prev, m_t_prev, v_t_prev):
+def global_yogi(args, epoch, w, w_global_prev, m_prev, v_prev):
     """
     FedYogi: Global optimizer = Yogi
     """
@@ -192,45 +192,45 @@ def global_yogi(args, epoch, w, w_global_prev, m_t_prev, v_t_prev):
         
     if epoch == 0:
         w_global = average_weights(w)
-        m_t = None
-        v_t = None
+        m = None
+        v = None
     elif epoch == 1:
         w_avg = average_weights(w)
         w_global = copy.deepcopy(w_avg)
         
-        # Delta_t = w_avg - w_global_prev
-        Delta_t = copy.deepcopy(w_avg)
-        for key in Delta_t.keys():
-            Delta_t[key] = Delta_t[key] - w_global_prev[key]
+        # Delta = w_avg - w_global_prev
+        Delta = copy.deepcopy(w_avg)
+        for key in Delta.keys():
+            Delta[key] = Delta[key] - w_global_prev[key]
             
-        m_t = Delta_t
+        m = Delta
         
-        # v_t = Delta_t^2
-        v_t = copy.deepcopy(Delta_t)
-        for key in Delta_t.keys():
-            v_t[key] = torch.square(Delta_t[key])
+        # v = Delta^2
+        v = copy.deepcopy(Delta)
+        for key in Delta.keys():
+            v[key] = torch.square(Delta[key])
     else:
         w_avg = average_weights(w)
         
-        # Delta_t = w_avg - w_global_prev
-        Delta_t = copy.deepcopy(w_avg)
-        for key in Delta_t.keys():
-            Delta_t[key] = Delta_t[key] - w_global_prev[key]
+        # Delta = w_avg - w_global_prev
+        Delta = copy.deepcopy(w_avg)
+        for key in Delta.keys():
+            Delta[key] = Delta[key] - w_global_prev[key]
             
-        # m_t = beta1 * m_t_prev + (1-beta1) * Delta_t
-        m_t = copy.deepcopy(Delta_t)                       # simplified case with beta1 = 0.0
+        # m = beta1 * m_prev + (1-beta1) * Delta
+        m = copy.deepcopy(Delta)                       # simplified case with beta1 = 0.0
             
-        # v_t = v_t_prev + Delta_t**2
-        v_t = copy.deepcopy(Delta_t)
-        for key in Delta_t.keys():
-            v_t[key] =  v_t_prev[key] - (1.0-beta2) * torch.square(Delta_t[key]) * torch.sign(v_t_prev[key] - torch.square(Delta_t[key]))
+        # v = v_prev + Delta**2
+        v = copy.deepcopy(Delta)
+        for key in Delta.keys():
+            v[key] =  v_prev[key] - (1.0-beta2) * torch.square(Delta[key]) * torch.sign(v_prev[key] - torch.square(Delta[key]))
         
-        # w_global = w_global_prev + lr * (m_t/tau + sqrt(v_t))
+        # w_global = w_global_prev + lr * (m/tau + sqrt(v))
         w_global = copy.deepcopy(w_global_prev)
         for key in w_global.keys():
-            w_global[key] = w_global_prev[key] + args.lr * torch.div(m_t[key], args.tau + torch.sqrt(v_t[key]))
+            w_global[key] = w_global_prev[key] + args.lr * torch.div(m[key], args.tau + torch.sqrt(v[key]))
             
-    return w_global, m_t, v_t
+    return w_global, m, v
 
 
 def exp_details(args):
